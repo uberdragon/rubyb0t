@@ -1,0 +1,40 @@
+GEM
+  remote: http://rubygems.org/
+  specs:
+    addressable (2.3.3)
+    cinch (2.0.4)
+    faraday (0.8.6)
+      multipart-post (~> 1.1)
+    faraday_middleware (0.9.0)
+      faraday (>= 0.7.4, < 0.9)
+    hashie (1.2.0)
+    multi_json (1.7.1)
+    multipart-post (1.2.0)
+    netrc (0.7.7)
+    nokogiri (1.5.7)
+    octokit (1.23.0)
+      addressable (~> 2.2)
+      faraday (~> 0.8)
+      faraday_middleware (~> 0.9)
+      hashie (~> 1.2)
+      multi_json (~> 1.3)
+      netrc (~> 0.7.7)
+    rack (1.5.2)
+    rack-protection (1.5.0)
+      rack
+    shorturl (1.0.0)
+    sinatra (1.4.1)
+      rack (~> 1.5, >= 1.5.2)
+      rack-protection (~> 1.4)
+      tilt (~> 1.3, >= 1.3.4)
+    tilt (1.3.6)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  cinch
+  nokogiri
+  octokit
+  shorturl
+  sinatra
