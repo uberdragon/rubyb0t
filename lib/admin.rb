@@ -20,12 +20,19 @@ class Admin
   match /nick_check/, method: :nick_check
   match /ident/, method: :ident
 
+  listen_to :op, method: :saw_op
+
   #match "You're not channel operator", method: :self_op
 
   timer 60*30, method: :nick_check
 
+
+
+
   def initialize(*args)
     super
+
+    @op_nicks_queue = {}
 
     @admins = ["UberB0t","Uber|Dragon","UberDragon"]
 
@@ -41,6 +48,8 @@ class Admin
     end
 
   end
+
+  #####################  Trigger Methods #############################
 
   def check_user(user)
     user.refresh # be sure to refresh the data, or someone could steal the nick
@@ -78,7 +87,8 @@ class Admin
 
   def op(m, input)
     return unless check_user(m.user)
-    if !input.to_s.empty?
+
+    unless input.to_s.empty?
       options = input.split
       channel = options[0] if options.length > 1
       nick = options[1] if options.length > 1
@@ -87,13 +97,23 @@ class Admin
     channel ||= m.channel
     nick ||= m.user
 
+    if Channel(channel).opped?(nick)
+      m.reply "#{nick} is already opped"
+      return
+    end
+
     if bot_has_ops?(channel)
       Channel(channel).op(nick)
     else
-      m.reply "Channel says I'm not an OP... attempting to fixing that anomaly... >:)"
-      @chanserv.send "op #{m.channel} #{@bot.nick}"
-      sleep(5)
-      Channel(channel).op(nick)
+      m.reply "Channel says I'm not an OP... attempting to fix that anomaly... >:)"
+      @chanserv.send "op #{channel} #{@bot.nick}"
+      if @op_nicks_queue[channel].nil? && nick != @bot.nick
+        @op_nicks_queue[channel] = []
+        @op_nicks_queue[channel].push(nick)
+      else
+        @op_nicks_queue[channel].push(nick)
+      end
+      puts "Don't have OP in #{channel} so queing #{nick} for OP when I do"
     end
 
   end
@@ -123,6 +143,24 @@ class Admin
     @nickserv.send "identify %s" % [$settings[:password]]
     m.reply "I have identified to nickserv!"
   end
+
+  ###################  Event Methods #####################
+
+  def saw_op(m, nick)
+    if nick == @bot.nick
+      puts "-=-=-= I got opped in #{m.channel} -=-=-="
+      unless @op_nicks_queue[m.channel].nil?
+        puts "*** Starting Op Queue for #{m.channel} ***"
+        @op_nicks_queue[m.channel].each do |nick|
+          puts "* #{nick} getting oped if needed"
+          Channel(m.channel).op(nick) if !Channel(m.channel).opped?(nick)
+        end
+        @op_nicks_queue.tap {|c| c.delete(m.channel)}
+      end
+    end
+  end
+
+  ####################  Helper Methods ####################
 
   def nick_check
     unless @bot.nick == $settings[:nick]
