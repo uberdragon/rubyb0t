@@ -19,6 +19,7 @@ class Admin
   match /nick (.+)/, method: :nick_change
   match /nick_check/, method: :nick_check
   match /ident/, method: :ident
+  match /msg (.+)/, method: :message
 
   listen_to :op, method: :saw_op
 
@@ -50,6 +51,10 @@ class Admin
   end
 
   #####################  Trigger Methods #############################
+
+  def message(m, target)
+    puts "#{m} and --> #{target}"
+  end
 
   def check_user(user)
     user.refresh # be sure to refresh the data, or someone could steal the nick
@@ -90,8 +95,10 @@ class Admin
 
     unless input.to_s.empty?
       options = input.split
-      channel = options[0] if options.length > 1
-      nick = options[1] if options.length > 1
+      if options.length > 1
+        channel = options[0]
+        nick = options[1]
+      end
       nick = options[0] if options.length == 1
     end
     channel ||= m.channel
@@ -105,7 +112,7 @@ class Admin
     if bot_has_ops?(channel)
       Channel(channel).op(nick)
     else
-      m.reply "Channel says I'm not an OP... attempting to fix that anomaly... >:)"
+      m.reply "I'm not an OP... attempting to fix that anomaly... >:)"
       @chanserv.send "op #{channel} #{@bot.nick}"
       if @op_nicks_queue[channel].nil? && nick != @bot.nick
         @op_nicks_queue[channel] = []
@@ -114,6 +121,7 @@ class Admin
         @op_nicks_queue[channel].push(nick)
       end
       puts "Don't have OP in #{channel} so queing #{nick} for OP when I do"
+      puts "#{@op_nicks_queue}"
     end
 
   end

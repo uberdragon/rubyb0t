@@ -25,6 +25,8 @@ bot = Cinch::Bot.new do
       Admin,
       UrbanDictionary,
       Demo,
+      DiceRoll,
+      Google,
       Github,
       Cinch::Plugins::PluginManagement,
       Wiki,
