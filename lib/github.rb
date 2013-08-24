@@ -19,7 +19,7 @@ class Github
 
     gitio = URI.parse('http://git.io/').freeze
     params = {
-      'url' => "https://github.com/searchinfluence/#{repo}"
+      'url' => $settings[:github_feed]
     }
     res = Net::HTTP.post_form(gitio, params)
 

@@ -4,29 +4,36 @@ require "cinch/plugins/identify"
 
 Dir[File.dirname(__FILE__) + '/lib/**/*.rb'].each {|file| require file}
 
-
+$settings = {
+  :nick => "rubyb0t",
+  :user => "rubyb0t",
+  :password => "l3tm31n",
+  :network => :dalnet,
+  :server => "irc.dal.net",
+  :channels => ["#DragonCave","#Uber|Dragon"],
+  :github_feed => "https://github.com/searchinfluence/#{repo}"
+}
 
 bot = Cinch::Bot.new do
 
   configure do |c|
-    c.server = "irc.dal.net"
-    c.nick   = "rubyb0t"
-    c.user = "rubyb0t"
-    c.channels = ["#DragonCave","#Uber|Dragon"]
+    c.server = $settings[:server]
+    c.nick   = $settings[:nick]
+    c.user = $settings[:user]
+    c.channels = $settings[:channels]
     c.plugins.plugins = [
       Admin,
       UrbanDictionary,
       Demo,
       Github,
       Cinch::Plugins::PluginManagement,
-      Mobes,
       Wiki,
       Cinch::Plugins::Identify
     ]
     c.plugins.options[Cinch::Plugins::Identify] = {
-      :username => "rubyb0t",
-      :password => "l3tm31n",
-      :type => :dalnet
+      :username => $settings[:nick],
+      :password => $settings[:password],
+      :type => $settings[:network]
     }
 
   end
