@@ -62,22 +62,8 @@ class Admin
   end
 
   def op(m, input)
-
     return unless check_user(m.user)
-    if !input.to_s.empty?
-      options = input.split
-      channel = options[0] if options.length > 1
-      nick = options[1] if options.length > 1
-      nick = options[0] if options.length == 1
-    end
-    channel = channel ||= m.channel
-    nick = nick ||= m.user
-puts m    
-    @bot.send("/mode #{channel} +o #{nick}")
-
-
-
-#    m.channel.op(nick)
+    m.channel.op(nick)
   end
 
   def deop(m, nick)
