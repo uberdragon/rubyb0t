@@ -2,21 +2,27 @@ class Admin
   include Cinch::Plugin
 
   match /join (.+)/, method: :join
+  match /j (.+)/, method: :join
+
   match /part(?: (.+))?/, method: :part
+  match /p(?: (.+))?/, method: :part
+
   match /chan_op(?: (.+))?/, method: :channel_op
   match /op(?: (.+))?/, method: :op
   match /deop (.+)/, method: :deop
   match /kick (.+)/, method: :kick
   match /voice (.+)/, method: :voice
+  match /v (.+)/, method: :voice
+
   match /devoice (.+)/, method: :devoice
 
   match /nick (.+)/, method: :nick_change
   match /nick_check/, method: :nick_check
   match /ident/, method: :ident
 
-  match /You're not channel operator/, method: :self_op
+  #match "You're not channel operator", method: :self_op
 
-  timer 300, method: :nick_check
+  timer 60*30, method: :nick_check
 
   def initialize(*args)
     super
@@ -34,11 +40,6 @@ class Admin
       @memoserv = Cinch::User.new 'MemoServ', bot
     end
 
-  end
-
-  def self_op(m)
-    puts "!!!!!!!!!!!!! #{m} !!!!!!!!!!!!!!!"
-    chan_op m.channel @bot.nick
   end
 
   def check_user(user)
@@ -83,10 +84,18 @@ class Admin
       nick = options[1] if options.length > 1
       nick = options[0] if options.length == 1
     end
+    channel ||= m.channel
+    nick ||= m.user
 
-    channel = channel ||= m.channel
-    nick = nick ||= @bot.nick
-    Channel(channel).op(nick)
+    if bot_has_ops?(channel)
+      Channel(channel).op(nick)
+    else
+      m.reply "Channel says I'm not an OP... attempting to fixing that anomaly... >:)"
+      @chanserv.send "op #{m.channel} #{@bot.nick}"
+      sleep(5)
+      Channel(channel).op(nick)
+    end
+
   end
 
   def deop(m, nick)
@@ -115,10 +124,14 @@ class Admin
     m.reply "I have identified to nickserv!"
   end
 
-  def nick_check(m)
+  def nick_check
     unless @bot.nick == $settings[:nick]
       m.reply 'Fixing nick.'
       @bot.nick = $settings[:nick]
     end
+  end
+
+  def bot_has_ops?(channel,nick=@bot.nick)
+    Channel(channel).opped? nick
   end
 end

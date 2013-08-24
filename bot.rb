@@ -8,8 +8,8 @@ $settings = {
   :nick => "rubyb0t",
   :user => "rubyb0t",
   :password => "l3tm31n",
-  :network => :nickserv,
-  :server => "irc.freenode.net",
+  :network => :dalnet,
+  :server => "irc.dal.net",
   :auto_channels => ["#DragonCave","#Uber|Dragon"],
   :github_feed => "https://github.com/searchinfluence/"
 }
@@ -42,6 +42,14 @@ bot = Cinch::Bot.new do
 
   on :connect do
     # run general commands on connect
+  end
+
+  on :message, /hello(.+)/ do |m|
+    m.reply "Hello, #{m.user.nick}"
+  end
+
+  on :no_channel_op do |m|
+    m.reply "Sorry can't help you I couldn't obtain OP here."
   end
 end
 
