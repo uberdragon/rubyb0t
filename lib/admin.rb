@@ -11,8 +11,11 @@ class Admin
   match /devoice (.+)/, method: :devoice
 
   match /nick (.+)/, method: :nick_change
-  match /nick_check (.+)/, method: :nick_check
-  match /ident/, method: :auto_ident
+  match /nick_check/, method: :nick_check
+  match /ident/, method: :ident
+
+  match /You're not channel operator/, method: :self_op
+
   timer 300, method: :nick_check
 
   def initialize(*args)
@@ -20,11 +23,22 @@ class Admin
 
     @admins = ["UberB0t","Uber|Dragon","UberDragon"]
 
+    case $settings[:network]
+    when :dalnet
+      @chanserv = Cinch::User.new 'ChanServ@services.dal.net', bot
+      @nickserv = Cinch::User.new 'NickServ@services.dal.net', bot
+      @memoserv = Cinch::User.new 'MemoServ@services.dal.net', bot
+    else
+      @chanserv = Cinch::User.new 'ChanServ', bot
+      @nickserv = Cinch::User.new 'NickServ', bot
+      @memoserv = Cinch::User.new 'MemoServ', bot
+    end
 
-    @chanserv = Cinch::User.new 'ChanServ@services.dal.net', bot
-    @nickserv = Cinch::User.new 'NickServ@services.dal.net', bot
-    @memoserv = Cinch::User.new 'MemoServ@services.dal.net', bot
+  end
 
+  def self_op(m)
+    puts "!!!!!!!!!!!!! #{m} !!!!!!!!!!!!!!!"
+    chan_op m.channel @bot.nick
   end
 
   def check_user(user)
@@ -63,7 +77,16 @@ class Admin
 
   def op(m, input)
     return unless check_user(m.user)
-    m.channel.op(nick)
+    if !input.to_s.empty?
+      options = input.split
+      channel = options[0] if options.length > 1
+      nick = options[1] if options.length > 1
+      nick = options[0] if options.length == 1
+    end
+
+    channel = channel ||= m.channel
+    nick = nick ||= @bot.nick
+    Channel(channel).op(nick)
   end
 
   def deop(m, nick)
@@ -86,7 +109,7 @@ class Admin
     m.channel.devoice(nick)
   end
 
-  def auto_ident(m)
+  def ident(m)
     return unless check_user(m.user)    
     @nickserv.send "identify %s" % [$settings[:password]]
     m.reply "I have identified to nickserv!"

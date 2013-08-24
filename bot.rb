@@ -8,10 +8,10 @@ $settings = {
   :nick => "rubyb0t",
   :user => "rubyb0t",
   :password => "l3tm31n",
-  :network => :dalnet,
-  :server => "irc.dal.net",
-  :channels => ["#DragonCave","#Uber|Dragon"],
-  :github_feed => "https://github.com/searchinfluence/#{repo}"
+  :network => :nickserv,
+  :server => "irc.freenode.net",
+  :auto_channels => ["#DragonCave","#Uber|Dragon"],
+  :github_feed => "https://github.com/searchinfluence/"
 }
 
 bot = Cinch::Bot.new do
@@ -20,7 +20,7 @@ bot = Cinch::Bot.new do
     c.server = $settings[:server]
     c.nick   = $settings[:nick]
     c.user = $settings[:user]
-    c.channels = $settings[:channels]
+    c.channels = $settings[:auto_channels]
     c.plugins.plugins = [
       Admin,
       UrbanDictionary,
