@@ -9,6 +9,7 @@ class Seen
 
   include Cinch::Plugin
   listen_to :channel
+
   match /seen (.+)/
 
   def initialize(*args)

@@ -50,8 +50,9 @@ bot = Cinch::Bot.new do
     m.reply "Hello, #{m.user.nick}"
   end
 
-  on :no_channel_op do |m|
-    m.reply "Sorry can't help you I couldn't obtain OP here."
+
+  on 482 do |m|
+    m.reply "Sad, I don't have ops here."
   end
 end
 

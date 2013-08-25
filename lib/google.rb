@@ -9,17 +9,22 @@ class Google
 
   def search(query)
     url = "http://www.google.com/search?q=#{CGI.escape(query)}"
-    res = Nokogiri::HTML(open(url)).at("h3.r")
 
-    title = res.text
-    link = res.at('a')[:href]
-    desc = res.at("./following::div").children.first.text
-    CGI.unescape_html "#{title} - #{desc} (#{link})"
+    if query.split.last == 'url'
+      url[0..-5]
+    else
+      page = Nokogiri::HTML(open(url))
+      title = page.at("h3.r").text
+      desc = page.at("span.st").text
+      link = page.at("h3.r").at('a')[:href].gsub('/url?q=','').split('&')[0]
+
+      CGI.unescape_html "#{title} - #{desc} (#{link})"
+    end
   rescue
     "No results found"
   end
 
   def execute(m, query)
-    m.reply(search(query))
+    m.reply(search(query),true)
   end
 end
