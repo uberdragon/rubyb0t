@@ -21,6 +21,7 @@ class Admin
   match /ident/, method: :ident
   match /msg (.+)/, method: :message
   match /msg (.+?) (.+)/, method: :message
+  match /quit (.+?)/, method: :quit
 
   listen_to :op, method: :saw_op
 
@@ -52,6 +53,14 @@ class Admin
   end
 
   #####################  Trigger Methods #############################
+  def quit(m)
+    return unless check_user(m.user)
+    @bot.quit(m.message.split[1..-1].join(" "))
+    sleep(30)
+    Thread.new do
+      @bot.start
+    end
+  end
 
   def message(m, receiver, message)
     return unless check_user(m.user)

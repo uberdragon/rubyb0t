@@ -10,7 +10,7 @@ $settings = {
   :password => "l3tm31n",
   :network => :dalnet,
   :server => "irc.dal.net",
-  :auto_channels => ["#DragonCave","#Uber|Dragon"],
+  :auto_channels => ["#DragonCave","#Uber|Dragon","#html"],
   :github_feed => "https://github.com/searchinfluence/"
 }
 

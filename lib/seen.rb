@@ -35,6 +35,9 @@ class Seen
 
   include Cinch::Plugin
 
+  listen_to :connect, method: :listen_connect
+  listen_to :disconnect, method: :listen_disconnect
+
   listen_to :channel, method: :listen_channel
   listen_to :quit, method: :listen_quit
   listen_to :join, method: :listen_join
@@ -47,11 +50,20 @@ class Seen
   listen_to :ban, method: :listen_ban
   listen_to :unban, method: :listen_unban
 
+
   match /seen (.+)/, method: :execute
 
   def initialize(*args)
     super
     @users = {}
+  end
+
+  def listen_connect(m)
+    @users = ObjectStash.load 'tmp/seen-users.stash'
+  end
+
+  def listen_disconnect(m)
+    ObjectStash.store @users, './tmp/seen-users.stash'
   end
 
   def listen_channel(m)
