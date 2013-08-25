@@ -56,20 +56,10 @@ class Seen
 
   def listen_channel(m)
     return if m.user == @bot.nick
-    puts "~~~~~~~~~~~~~~~~~ #{m} ~~~~~~~~~~~~~~~~~"
-    puts m.user
-    puts m.message
-    puts m.channel.name
-    puts "~~~~~~~~~~~~~[ CHAN ]~~~~~~~~~~~~~~"
-
-    puts "#{m.message.to_s.split[0]} == ACTION ??"
     if m.message.to_s.gsub("\u0001","").split[0] == "ACTION"
-      puts "!!!! detected action !!!!!"
       type = 'action'
       message = m.message.to_s.gsub("\u0001","").split[1..-1].join(" ")
     else
-    puts "#{m.message.to_s.split[0]} != ACTION apparently"
-
       message = m.message
       type = 'msg'
     end
@@ -77,97 +67,53 @@ class Seen
   end
 
   def listen_op(m, nick)
-    puts "~~~~~~~~~~~~~~~~~ #{m} ~~~~~~~~~~~~~~~~~"
-    puts m.user
-    puts m.channel.name
-    puts "~~~~~~~~~~~~~[ OP ]~~~~~~~~~~~~~~"
+    return if m.user.nick == @bot.nick
     @users[nick.nick.downcase] = SeenStruct.new(nick.nick, m.channel.name, :none, 'op', Time.now,m.user)
   end
 
   def listen_deop(m, nick)
-    puts "~~~~~~~~~~~~~~~~~ #{m} ~~~~~~~~~~~~~~~~~"
-    puts m.user
-    puts m.channel.name
-    puts "~~~~~~~~~~~~~[ DEOP ]~~~~~~~~~~~~~~"
+    return if m.user.nick == @bot.nick
     @users[nick.nick.downcase] = SeenStruct.new(nick.nick, m.channel.name, :none, 'deop', Time.now, m.user)
   end
 
   def listen_voice(m, nick)
-    puts "~~~~~~~~~~~~~~~~~ #{m} ~~~~~~~~~~~~~~~~~"
-    puts nick
-    puts m.user
-    puts m.channel.name
-    puts "~~~~~~~~~~~~~[ VOICE ]~~~~~~~~~~~~~~"
+    return if m.user.nick == @bot.nick
     @users[nick.nick.downcase] = SeenStruct.new(nick.nick, m.channel.name, :none, 'voice', Time.now, m.user)
   end
 
   def listen_devoice(m, nick)
-    puts "~~~~~~~~~~~~~~~~~ #{m} ~~~~~~~~~~~~~~~~~"
-    puts m.user
-    puts m.channel.name
-    puts "~~~~~~~~~~~~~[ DEVOICE ]~~~~~~~~~~~~~~"
+    return if m.user.nick == @bot.nick
     @users[nick.nick.downcase] = SeenStruct.new(nick.nick, m.channel.name, :none, 'devoice', Time.now, m.user)
   end
 
   def listen_kick(m)
-    puts "~~~~~~~~~~~~~~~~~ #{m} ~~~~~~~~~~~~~~~~~"
-    puts m.user
-    puts m.params[1]
-    puts m.message
-    puts m.channel.name
-    puts "~~~~~~~~~~~~~[ KICK ]~~~~~~~~~~~~~~"
+    return if m.user.nick == @bot.nick
     @users[m.params[1].downcase] = SeenStruct.new(m.params[1], m.channel.name, m.message, 'kick', Time.now, m.user.nick)
-    puts "#{@users[m.user.nick.downcase]}"
   end
 
   def listen_ban(m, mask)
-    puts "~~~~~~~~~~~~~~~~~ #{m} ~~~~~~~~~~~~~~~~~"
-    puts mask
+    return if m.user.nick == @bot.nick
     nick = mask.to_s.split("!")[0]
-    puts nick
-    puts m.channel.name
-    puts "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-    puts m.params
-    puts "~~~~~~~~~~~~~[ BAN ]~~~~~~~~~~~~~~"
     @users[nick.downcase] = SeenStruct.new(nick, m.channel.name, mask, 'ban', Time.now, m.user.nick)
   end
 
   def listen_unban(m, mask)
-    puts "~~~~~~~~~~~~~~~~~ #{m} ~~~~~~~~~~~~~~~~~"
-    puts mask
+    return if m.user.nick == @bot.nick
     nick = mask.to_s.split("!")[0]
-    puts nick
-    puts m.channel.name
-    puts "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-    puts m.params
-    puts "~~~~~~~~~~~~~[ UNBAN ]~~~~~~~~~~~~~~"
     @users[nick.downcase] = SeenStruct.new(nick, m.channel.name, mask, 'unban', Time.now, m.user.nick)
   end
 
   def listen_quit(m)
-    puts "~~~~~~~~~~~~~~~~~ #{m} ~~~~~~~~~~~~~~~~~"
-    puts m.user
-    puts m.message
-    puts "~~~~~~~~~~~~~[ QUIT ]~~~~~~~~~~~~~~"
     @users[m.user.nick.downcase] = SeenStruct.new(m.user.nick, :none, m.message, 'quit', Time.now)
   end
 
   def listen_join(m)
     return if m.user.nick == @bot.nick
-    puts "~~~~~~~~~~~~~~~~~ #{m} ~~~~~~~~~~~~~~~~~"
-    puts m.user
-    puts m.channel
-    puts "~~~~~~~~~~~~~[ JOIN ]~~~~~~~~~~~~~~"
     @users[m.user.nick.downcase] = SeenStruct.new(m.user.nick, m.channel.name, :none, 'join', Time.now)
   end
 
   def listen_part(m)
     return if m.user.nick == @bot.nick
-    puts "~~~~~~~~~~~~~~~~~ #{m} ~~~~~~~~~~~~~~~~~"
-    puts m.user.nick
-    puts m.channel
-    puts m.message
-    puts "~~~~~~~~~~~~~[ PART ]~~~~~~~~~~~~~~"
     @users[m.user.nick.downcase] = SeenStruct.new(m.user.nick, m.channel.name, m.message, 'part', Time.now)
   end
 
