@@ -20,6 +20,7 @@ class Admin
   match /nick_check/, method: :nick_check
   match /ident/, method: :ident
   match /msg (.+)/, method: :message
+  match /msg (.+?) (.+)/, method: :message
 
   listen_to :op, method: :saw_op
 
@@ -52,8 +53,9 @@ class Admin
 
   #####################  Trigger Methods #############################
 
-  def message(m, target)
-    puts "#{m} and --> #{target}"
+  def message(m, receiver, message)
+    return unless check_user(m.user)
+    User(receiver).send(message)
   end
 
   def check_user(user)

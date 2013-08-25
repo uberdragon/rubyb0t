@@ -22,15 +22,16 @@ bot = Cinch::Bot.new do
     c.user = $settings[:user]
     c.channels = $settings[:auto_channels]
     c.plugins.plugins = [
+      Cinch::Plugins::Identify,
+      Cinch::Plugins::PluginManagement,
       Admin,
-      UrbanDictionary,
       Demo,
       DiceRoll,
-      Google,
       Github,
-      Cinch::Plugins::PluginManagement,
+      Google,
+      Seen,
       Wiki,
-      Cinch::Plugins::Identify
+      UrbanDictionary
     ]
     c.plugins.options[Cinch::Plugins::Identify] = {
       :username => $settings[:nick],
