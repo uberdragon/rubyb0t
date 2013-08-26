@@ -3,12 +3,13 @@ require 'cinch'
 class Seen
 
   class SeenStruct < Struct.new(:who, :where, :what, :type, :time, :operator)
-
     def last_seen
       now = Time.now
       total_seconds = now.to_i - time.to_i
       time_since = "- #{Utils.seconds_to_string(total_seconds)} ago. [#{Time.at(time).asctime}]"
       case type
+      when 'nick'
+        "%s was seen changing nick to %s %s" % [who,what,time_since]
       when 'msg'
         "%s was seen in %s saying, \"%s\" %s" % [who,where,what,time_since]
       when 'action'
@@ -58,10 +59,11 @@ class Seen
   listen_to :unban, method: :listen_unban
   listen_to :away, method: :listen_away
   listen_to :unaway, method: :listen_unaway
+  listen_to :nick, method: :listen_nickchange
 
   match /seen (.+)/, method: :execute
 
-  timer 120, method: :backup_data!
+  timer 600, method: :backup_data!
 
   def initialize(*args)
     super
@@ -71,6 +73,12 @@ class Seen
 
   def listen_disconnect(m)
     backup_data!
+  end
+
+  def listen_nickchange(m)
+    return if m.user.last_nick == @bot.nick
+    return if m.user.nick == @bot.nick
+    @users[m.user.last_nick.downcase] = SeenStruct.new(m.user.last_nick, :none, m.user.nick, 'nick', Time.now.to_i)
   end
 
   def listen_away(m)
