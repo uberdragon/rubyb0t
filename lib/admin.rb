@@ -20,7 +20,7 @@ class Admin
   match /nick_check/, method: :nick_check
   match /ident/, method: :ident
   match /msg (.+?) (.+)/, method: :message
-  match /quit (.+?)/, method: :quit
+  match /quit(.+?)/, method: :quit
 
   listen_to :op, method: :saw_op
 

@@ -2,46 +2,6 @@ require 'cinch'
 
 class Seen
 
-  class SeenStruct < Struct.new(:who, :where, :what, :type, :time, :operator)
-    def last_seen
-      now = Time.now
-      total_seconds = now.to_i - time.to_i
-      time_since = "- #{Utils.seconds_to_string(total_seconds)} ago. [#{Time.at(time).asctime}]"
-      case type
-      when 'nick'
-        "%s was seen changing nick to %s %s" % [who,what,time_since]
-      when 'msg'
-        "%s was seen in %s saying, \"%s\" %s" % [who,where,what,time_since]
-      when 'action'
-        "%s was seen in %s using an action, \"%s\" %s" % [who,where,what,time_since]
-      when 'quit'
-        "%s was seen quiting IRC with message, \"%s\" %s" % [who,what,time_since]
-      when 'join'
-        "%s was seen joining %s %s" % [who,where,time_since]
-      when 'part'
-        "%s was seen leaving %s with message, \"%s\" %s" % [who,where,what,time_since]
-      when 'op'
-        "%s was seen getting OP in %s by %s %s" % [who,where,operator,time_since]
-      when 'deop'
-        "%s was seen losing OP in %s by %s %s" % [who,where,operator,time_since]
-      when 'kick'
-        "%s was seen getting kicked out of %s by %s with message, \"%s\" %s" % [who,where,operator,what,time_since]
-      when 'ban'
-        "%s was banned in %s by #{operator} (%s) %s" % [who,where,operator,what,time_since]
-      when 'unban'
-        "%s was unbanned in %s by %s (%s) %s" % [who,where,operator,what,time_since]
-      when 'voice'
-        "%s was voiced in %s by %s %s" % [who,where,operator,time_since]
-      when 'devoice'
-        "%s was devoiced in %s by %s %s" % [who,where,operator,time_since]
-      when 'away'
-        "%s went away with message, \"%s\" %s" % [who,what,time_since]
-      when 'unaway'
-        "%s came back from away %s" % [who,time_since]
-      end
-    end
-  end
-
   include Cinch::Plugin
 
   listen_to :disconnect, method: :listen_disconnect
@@ -69,6 +29,7 @@ class Seen
     super
     @users = ObjectStash.load './tmp/seen-users.stash' || {}
     log("===== Loading !seen Data from Disk into Memory =====", :info)
+    log(@users.inspect, :info)
   end
 
   def listen_disconnect(m)
@@ -78,17 +39,17 @@ class Seen
   def listen_nickchange(m)
     return if m.user.last_nick == @bot.nick
     return if m.user.nick == @bot.nick
-    @users[m.user.last_nick.downcase] = SeenStruct.new(m.user.last_nick, :none, m.user.nick, 'nick', Time.now.to_i)
+    build_data(m.user.last_nick, :none, m.user.nick, 'nick', Time.now.to_i)
   end
 
   def listen_away(m)
     return if m.user.nick == @bot.nick
-    @users[m.user.nick.downcase] = SeenStruct.new(m.user.nick, :none, m.message, 'away', Time.now.to_i)
+    build_data(m.user.nick, :none, m.message, 'away', Time.now.to_i)
   end
 
   def listen_unaway(m)
     return if m.user.nick == @bot.nick
-    @users[m.user.nick.downcase] = SeenStruct.new(m.user.nick, :none, :none, 'unaway', Time.now.to_i)
+    build_data(m.user.nick, :none, :none, 'unaway', Time.now.to_i)
   end
 
   def listen_channel(m)
@@ -100,63 +61,112 @@ class Seen
       message = m.message
       type = 'msg'
     end
-    @users[m.user.nick.downcase] = SeenStruct.new(m.user.nick, m.channel.name, message, type, Time.now.to_i)
+    build_data(m.user.nick, m.channel.name, message, type, Time.now.to_i)
   end
 
   def listen_op(m, nick)
     return if m.user.nick == @bot.nick
-    @users[nick.nick.downcase] = SeenStruct.new(nick.nick, m.channel.name, :none, 'op', Time.now.to_i,m.user)
+    build_data(nick.nick, m.channel.name, :none, 'op', Time.now.to_i,m.user)
   end
 
   def listen_deop(m, nick)
     return if m.user.nick == @bot.nick
-    @users[nick.nick.downcase] = SeenStruct.new(nick.nick, m.channel.name, :none, 'deop', Time.now.to_i, m.user)
+    build_data(nick.nick, m.channel.name, :none, 'deop', Time.now.to_i, m.user)
   end
 
   def listen_voice(m, nick)
     return if m.user.nick == @bot.nick
-    @users[nick.nick.downcase] = SeenStruct.new(nick.nick, m.channel.name, :none, 'voice', Time.now.to_i, m.user)
+    build_data(nick.nick, m.channel.name, :none, 'voice', Time.now.to_i, m.user)
   end
 
   def listen_devoice(m, nick)
     return if m.user.nick == @bot.nick
-    @users[nick.nick.downcase] = SeenStruct.new(nick.nick, m.channel.name, :none, 'devoice', Time.now.to_i, m.user)
+    build_data(nick.nick, m.channel.name, :none, 'devoice', Time.now.to_i, m.user)
   end
 
   def listen_kick(m)
     return if m.user.nick == @bot.nick
-    @users[m.params[1].downcase] = SeenStruct.new(m.params[1], m.channel.name, m.message, 'kick', Time.now.to_i, m.user.nick)
+    build_data(m.params[1], m.channel.name, m.message, 'kick', Time.now.to_i, m.user.nick)
   end
 
   def listen_ban(m, mask)
     return if m.user.nick == @bot.nick
     nick = mask.to_s.split("!")[0]
-    @users[nick.downcase] = SeenStruct.new(nick, m.channel.name, mask, 'ban', Time.now.to_i, m.user.nick)
+    build_data(nick, m.channel.name, mask, 'ban', Time.now.to_i, m.user.nick)
   end
 
   def listen_unban(m, mask)
     return if m.user.nick == @bot.nick
     nick = mask.to_s.split("!")[0]
-    @users[nick.downcase] = SeenStruct.new(nick, m.channel.name, mask, 'unban', Time.now.to_i, m.user.nick)
+    build_data(nick, m.channel.name, mask, 'unban', Time.now.to_i, m.user.nick)
   end
 
   def listen_quit(m)
-    @users[m.user.nick.downcase] = SeenStruct.new(m.user.nick, :none, m.message, 'quit', Time.now.to_i)
+    build_data(m.user.nick, :none, m.message, 'quit', Time.now.to_i)
   end
 
   def listen_join(m)
     return if m.user.nick == @bot.nick
-    @users[m.user.nick.downcase] = SeenStruct.new(m.user.nick, m.channel.name, :none, 'join', Time.now.to_i)
+    build_data(m.user.nick, m.channel.name, :none, 'join', Time.now.to_i)
   end
 
   def listen_part(m)
     return if m.user.nick == @bot.nick
-    @users[m.user.nick.downcase] = SeenStruct.new(m.user.nick, m.channel.name, m.message, 'part', Time.now.to_i)
+    build_data(m.user.nick, m.channel.name, m.message, 'part', Time.now.to_i)
+  end
+
+  def build_data who, where, what, type, time, operator=nil
+    @users[who.downcase] = {
+      :who => who,
+      :where => where,
+      :what => what,
+      :type => type,
+      :time => time,
+      :operator => operator
+    }
+  end
+
+  def reply d
+    now = Time.now
+    total_seconds = now.to_i - d[:time].to_i
+    timestamp = "- #{Utils.seconds_to_string(total_seconds)} ago. [#{Time.at(d[:time]).asctime}]"
+    case d[:type]
+    when 'nick'
+      "%s was seen changing nick to %s %s" % [d[:who],d[:what],timestamp]
+    when 'msg'
+      "%s was seen in %s saying, \"%s\" %s" % [d[:who],d[:where],d[:what],timestamp]
+    when 'action'
+      "%s was seen in %s using an action, \"%s\" %s" % [d[:who],d[:where],d[:what],timestamp]
+    when 'quit'
+      "%s was seen quiting IRC with message, \"%s\" %s" % [d[:who],d[:what],timestamp]
+    when 'join'
+      "%s was seen joining %s %s" % [d[:who],d[:where],timestamp]
+    when 'part'
+      "%s was seen leaving %s with message, \"%s\" %s" % [d[:who],d[:where],d[:what],timestamp]
+    when 'op'
+      "%s was seen getting OP in %s by %s %s" % [d[:who],d[:where],d[:operator],timestamp]
+    when 'deop'
+      "%s was seen losing OP in %s by %s %s" % [d[:who],d[:where],d[:operator],timestamp]
+    when 'kick'
+      "%s was seen getting kicked out of %s by %s with message, \"%s\" %s" % [d[:who],d[:where],d[:operator],d[:what],timestamp]
+    when 'ban'
+      "%s was banned in %s by #{operator} (%s) %s" % [d[:who],d[:where],d[:operator],d[:what],timestamp]
+    when 'unban'
+      "%s was unbanned in %s by %s (%s) %s" % [d[:who],d[:where],d[:operator],d[:what],timestamp]
+    when 'voice'
+      "%s was voiced in %s by %s %s" % [d[:who],d[:where],d[:operator],timestamp]
+    when 'devoice'
+      "%s was devoiced in %s by %s %s" % [d[:who],d[:where],d[:operator],timestamp]
+    when 'away'
+      "%s went away with message, \"%s\" %s" % [d[:who],d[:what],timestamp]
+    when 'unaway'
+      "%s came back from away %s" % [d[:who],timestamp]
+    end
   end
 
   def backup_data!
     log("===== Backing up !seen data from memory to disk =====", :info)
-    log(@users.inspect, :debug)
+    log(@users.inspect, :info)
     ObjectStash.store @users, './tmp/seen-users.stash'
   end
 
@@ -166,9 +176,11 @@ class Seen
     elsif nick.downcase == m.user.nick.downcase
       m.reply("That's you!",true)
     elsif @users.key?(nick.downcase)
-      m.reply(@users[nick.downcase].last_seen,true)
+      m.reply(reply(@users[nick.downcase]),true)
+      backup_data!
     else
       m.reply("I haven't seen #{nick}",true)
     end
   end
+
 end
