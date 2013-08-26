@@ -29,7 +29,7 @@ class Seen
     super
     @users = ObjectStash.load './tmp/seen-users.stash' || {}
     log("===== Loading !seen Data from Disk into Memory =====", :info)
-    log(@users.inspect, :info)
+    log(@users.inspect, :debug)
   end
 
   def listen_disconnect(m)
@@ -166,7 +166,7 @@ class Seen
 
   def backup_data!
     log("===== Backing up !seen data from memory to disk =====", :info)
-    log(@users.inspect, :info)
+    log(@users.inspect, :debug)
     ObjectStash.store @users, './tmp/seen-users.stash'
   end
 

@@ -1,8 +1,4 @@
-require 'cinch'
-require 'active_support/inflector'
-
 class Utils
-  include Cinch::Plugin
   def self.seconds_to_string(s)
 
   # d = days, h = hours, m = minutes, s = seconds
