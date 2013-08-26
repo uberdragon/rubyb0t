@@ -23,7 +23,7 @@ class Seen
 
   match /seen (.+)/, method: :execute
 
-  timer 600, method: :backup_data!
+  timer 1800, method: :backup_data! # 30 minutes
 
   def initialize(*args)
     super
@@ -53,7 +53,7 @@ class Seen
   end
 
   def listen_channel(m)
-    return if m.user == @bot.nick
+    return if m.user.nick == @bot.nick
     if m.message.to_s.gsub("\u0001","").split[0] == "ACTION"
       type = 'action'
       message = m.message.to_s.gsub("\u0001","").split[1..-1].join(" ")
@@ -65,39 +65,39 @@ class Seen
   end
 
   def listen_op(m, nick)
-    return if m.user.nick == @bot.nick
-    build_data(nick.nick, m.channel.name, :none, 'op', Time.now.to_i,m.user)
+    return if nick.nick == @bot.nick
+    build_data(nick.nick, m.channel.name, :none, 'op', Time.now.to_i, m.user)
   end
 
   def listen_deop(m, nick)
-    return if m.user.nick == @bot.nick
+    return if nick.nick == @bot.nick
     build_data(nick.nick, m.channel.name, :none, 'deop', Time.now.to_i, m.user)
   end
 
   def listen_voice(m, nick)
-    return if m.user.nick == @bot.nick
+    return if nick.nick == @bot.nick
     build_data(nick.nick, m.channel.name, :none, 'voice', Time.now.to_i, m.user)
   end
 
   def listen_devoice(m, nick)
-    return if m.user.nick == @bot.nick
+    return if nick.nick == @bot.nick
     build_data(nick.nick, m.channel.name, :none, 'devoice', Time.now.to_i, m.user)
   end
 
   def listen_kick(m)
-    return if m.user.nick == @bot.nick
+    return if m.params[1] == @bot.nick
     build_data(m.params[1], m.channel.name, m.message, 'kick', Time.now.to_i, m.user.nick)
   end
 
   def listen_ban(m, mask)
-    return if m.user.nick == @bot.nick
     nick = mask.to_s.split("!")[0]
+    return if nick == @bot.nick
     build_data(nick, m.channel.name, mask, 'ban', Time.now.to_i, m.user.nick)
   end
 
   def listen_unban(m, mask)
-    return if m.user.nick == @bot.nick
     nick = mask.to_s.split("!")[0]
+    return if nick == @bot.nick
     build_data(nick, m.channel.name, mask, 'unban', Time.now.to_i, m.user.nick)
   end
 
@@ -121,15 +121,16 @@ class Seen
       :where => where,
       :what => what,
       :type => type,
-      :time => time,
+      :time => time.to_i,
       :operator => operator
     }
   end
 
-  def reply d
+  def seen_reply d
     now = Time.now
-    total_seconds = now.to_i - d[:time].to_i
+    total_seconds = now.to_i - d[:time]
     timestamp = "- #{Utils.seconds_to_string(total_seconds)} ago. [#{Time.at(d[:time]).asctime}]"
+
     case d[:type]
     when 'nick'
       "%s was seen changing nick to %s %s" % [d[:who],d[:what],timestamp]
@@ -176,7 +177,7 @@ class Seen
     elsif nick.downcase == m.user.nick.downcase
       m.reply("That's you!",true)
     elsif @users.key?(nick.downcase)
-      m.reply(reply(@users[nick.downcase]),true)
+      m.reply(seen_reply(@users[nick.downcase]),true)
       backup_data!
     else
       m.reply("I haven't seen #{nick}",true)

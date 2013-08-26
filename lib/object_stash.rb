@@ -8,7 +8,7 @@ class ObjectStash
   include Cinch::Plugin
 
   def self.store obj, file_name, options={}
-    marshal_dump = Marshal.dump(JSON.dump(obj))
+    marshal_dump = Marshal.dump(obj)
     file = File.new(file_name,'w')
     file = Zlib::GzipWriter.new(file) unless options[:gzip] == false
     file.write marshal_dump
@@ -26,9 +26,9 @@ class ObjectStash
     rescue Zlib::GzipFile::Error
       file = File.open(file_name, 'r')
     ensure
-      json = Marshal.load file.read
+      hash = Marshal.load file.read
       file.close
-      return JSON.load(json)
+      return hash
     end
   end
 end
