@@ -19,7 +19,6 @@ class Admin
   match /nick (.+)/, method: :nick_change
   match /nick_check/, method: :nick_check
   match /ident/, method: :ident
-  match /msg (.+)/, method: :message
   match /msg (.+?) (.+)/, method: :message
   match /quit (.+?)/, method: :quit
 
@@ -118,8 +117,6 @@ class Admin
       @chanserv.send "op #{channel} #{@bot.nick}"
       if @op_nicks_queue[channel].nil? && nick != @bot.nick
         @op_nicks_queue[channel] = []
-        @op_nicks_queue[channel].push(nick)
-      else
         @op_nicks_queue[channel].push(nick)
       end
       log("Don't have OP in #{channel} so queing #{nick} for OP when I do")

@@ -3,6 +3,7 @@ require 'cinch'
 class Seen
 
   class SeenStruct < Struct.new(:who, :where, :what, :type, :time, :operator)
+
     def last_seen
       now = Time.now
       total_seconds = now.to_i - time.to_i
@@ -148,7 +149,7 @@ class Seen
   def backup_data!
     log("===== Backing up !seen data from memory to disk =====", :info)
     log(@users.inspect, :debug)
-    ObjectStash.store @users, 'tmp/seen-users.stash'
+    ObjectStash.store @users, './tmp/seen-users.stash'
   end
 
   def execute(m, nick)
