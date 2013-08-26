@@ -41,10 +41,14 @@ bot = Cinch::Bot.new do
 
   end
 
-
-
   on :connect do
     # run general commands on connect
+  end
+
+  on :disconnect do
+    Thread.new do
+      bot.start
+    end
   end
 
   on :message, /hello(.+)/ do |m|
@@ -57,13 +61,16 @@ bot = Cinch::Bot.new do
   end
 end
 
+bot.loggers << Cinch::Logger::FormattedLogger.new(File.open("./log/log.log", "a"))
+bot.loggers.level = :debug
+bot.loggers.first.level = :log
+
 Thread.new do
   bot.start
 end
 
 get '/announce' do
   bot.channels[0].msg params[:message]
-
 end
 
 File.open('tmp/irc_bot.pid', 'w') {|file| file << Process.pid }

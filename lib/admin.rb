@@ -54,42 +54,33 @@ class Admin
 
   #####################  Trigger Methods #############################
   def quit(m)
-    return unless check_user(m.user)
+    return unless user_is_admin?(m.user)
     @bot.quit(m.message.split[1..-1].join(" "))
-    sleep(30)
-    Thread.new do
-      @bot.start
-    end
   end
 
   def message(m, receiver, message)
-    return unless check_user(m.user)
+    return unless user_is_admin?(m.user)
     User(receiver).send(message)
   end
 
-  def check_user(user)
-    user.refresh # be sure to refresh the data, or someone could steal the nick
-    @admins.include?(user.nick)
-  end
-
   def nick_change(m, nick)
-    return unless check_user(m.user)
+    return unless user_is_admin?(m.user)
     @bot.nick = nick
   end
 
   def join(m, channel)
-    return unless check_user(m.user)
+    return unless user_is_admin?(m.user)
     Channel(channel).join
   end
 
   def part(m, channel)
-    return unless check_user(m.user)
+    return unless user_is_admin?(m.user)
     channel ||= m.channel
     Channel(channel).part if channel
   end
 
   def channel_op(m, input) # channel then nickname
-    return unless check_user(m.user)
+    return unless user_is_admin?(m.user)
     if !input.to_s.empty?
       options = input.split
       channel = options[0] if options.length > 1
@@ -102,7 +93,7 @@ class Admin
   end
 
   def op(m, input)
-    return unless check_user(m.user)
+    return unless user_is_admin?(m.user)
 
     unless input.to_s.empty?
       options = input.split
@@ -131,34 +122,33 @@ class Admin
       else
         @op_nicks_queue[channel].push(nick)
       end
-      puts "Don't have OP in #{channel} so queing #{nick} for OP when I do"
-      puts "#{@op_nicks_queue}"
+      log("Don't have OP in #{channel} so queing #{nick} for OP when I do")
     end
 
   end
 
   def deop(m, nick)
-    return unless check_user(m.user)
+    return unless user_is_admin?(m.user)
     m.channel.deop(nick)
   end
 
   def kick(m, nick)
-    return unless check_user(m.user) && nick != @bot.nick
+    return unless user_is_admin?(m.user) && nick != @bot.nick
     m.channel.kick(nick)
   end
 
   def voice(m, nick)
-    return unless check_user(m.user)
+    return unless user_is_admin?(m.user)
     m.channel.voice(nick)
   end
 
   def devoice(m, nick)
-    return unless check_user(m.user)
+    return unless user_is_admin?(m.user)
     m.channel.devoice(nick)
   end
 
   def ident(m)
-    return unless check_user(m.user)    
+    return unless user_is_admin?(m.user)
     @nickserv.send "identify %s" % [$settings[:password]]
     m.reply "I have identified to nickserv!"
   end
@@ -167,11 +157,11 @@ class Admin
 
   def saw_op(m, nick)
     if nick == @bot.nick
-      puts "-=-=-= I got opped in #{m.channel} -=-=-="
+      log("-=-=-= I got opped in #{m.channel} -=-=-=")
       unless @op_nicks_queue[m.channel].nil?
-        puts "*** Starting Op Queue for #{m.channel} ***"
+        log("*** Starting Op Queue for #{m.channel} ***")
         @op_nicks_queue[m.channel].each do |nick|
-          puts "* #{nick} getting oped if needed"
+          log("* #{nick} getting oped if needed")
           Channel(m.channel).op(nick) if !Channel(m.channel).opped?(nick)
         end
         @op_nicks_queue.tap {|c| c.delete(m.channel)}
@@ -180,6 +170,11 @@ class Admin
   end
 
   ####################  Helper Methods ####################
+
+  def user_is_admin?(user)
+    user.refresh # be sure to refresh the data, or someone could steal the nick
+    @admins.include?(user.nick)
+  end
 
   def nick_check
     unless @bot.nick == $settings[:nick]
