@@ -36,8 +36,6 @@ class Admin
 
     @op_nicks_queue = {}
 
-    @admins = ["UberB0t","Uber|Dragon","UberDragon"]
-
     case $settings[:network]
     when :dalnet
       @chanserv = Cinch::User.new 'ChanServ@services.dal.net', bot
@@ -52,6 +50,7 @@ class Admin
   end
 
   #####################  Trigger Methods #############################
+
   def quit(m)
     return unless user_is_admin?(m.user)
     @bot.quit(m.message.split[1..-1].join(" "))
@@ -79,7 +78,6 @@ class Admin
   end
 
   def channel_op(m, input) # channel then nickname
-    return unless user_is_admin?(m.user)
     if !input.to_s.empty?
       options = input.split
       channel = options[0] if options.length > 1
@@ -88,11 +86,12 @@ class Admin
     end
     channel = channel ||= m.channel
     nick = nick ||= @bot.nick
+
+    return unless user_has_access?(m.user,channel,:sop)
     @chanserv.send "op #{channel} #{nick}"
   end
 
   def op(m, input)
-    return unless user_is_admin?(m.user)
 
     unless input.to_s.empty?
       options = input.split
@@ -102,8 +101,10 @@ class Admin
       end
       nick = options[0] if options.length == 1
     end
-    channel ||= m.channel
-    nick ||= m.user
+    channel = channel ||= m.channel
+    nick = nick ||= m.user
+
+    return unless user_has_access?(m.user,channel,:aop)
 
     if Channel(channel).opped?(nick)
       m.reply "#{nick} is already opped"
@@ -125,22 +126,22 @@ class Admin
   end
 
   def deop(m, nick)
-    return unless user_is_admin?(m.user)
+    return unless user_has_access?(m.user,m.channel,:aop)
     m.channel.deop(nick)
   end
 
   def kick(m, nick)
-    return unless user_is_admin?(m.user) && nick != @bot.nick
+    return unless user_has_access?(m.user,m.channel,:aop) && nick != @bot.nick
     m.channel.kick(nick)
   end
 
   def voice(m, nick)
-    return unless user_is_admin?(m.user)
+    return unless user_has_access?(m.user,m.channel,:voice)
     m.channel.voice(nick)
   end
 
   def devoice(m, nick)
-    return unless user_is_admin?(m.user)
+    return unless user_has_access?(m.user,m.channel,:voice)
     m.channel.devoice(nick)
   end
 
@@ -167,11 +168,6 @@ class Admin
   end
 
   ####################  Helper Methods ####################
-
-  def user_is_admin?(user)
-    user.refresh # be sure to refresh the data, or someone could steal the nick
-    @admins.include?(user.nick)
-  end
 
   def nick_check
     unless @bot.nick == $settings[:nick]

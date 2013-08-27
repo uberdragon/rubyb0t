@@ -23,7 +23,7 @@ class Seen
 
   match /seen (.+)/, method: :execute
 
-  timer 1800, method: :backup_data! # 30 minutes
+  timer 600, method: :backup_data! # 10 minutes
 
   def initialize(*args)
     super

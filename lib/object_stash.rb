@@ -1,11 +1,9 @@
 require 'zlib'
-require 'cinch'
 
 # Save any ruby object to disk!
 # Objects are stored as gzipped marshal dumps.
 
 class ObjectStash
-  include Cinch::Plugin
 
   def self.store obj, file_name, options={}
     marshal_dump = Marshal.dump(obj)
@@ -31,4 +29,5 @@ class ObjectStash
       return hash
     end
   end
+  
 end

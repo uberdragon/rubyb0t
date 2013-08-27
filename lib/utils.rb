@@ -19,7 +19,7 @@ class Utils
   end
 
   def self.pluralize number 
-    return "s" if number > 1
+    return "s" unless number == 1
     return ""
   end
 
