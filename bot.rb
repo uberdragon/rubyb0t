@@ -10,16 +10,21 @@ $settings = {
   :password => "l3tm31n",
   :network => :dalnet,
   :server => "irc.dal.net",
-  :auto_channels => ["#DragonCave","#Uber|Dragon"],
-  :github_feed => "https://github.com/searchinfluence/"
+  :auto_channels => ["#DragonCave","#Uber|Dragon","#html"],
+  :bot_admins => ["UberB0t","Uber|Dragon","UberDragon"],
+  :global_sops => ["Ubie"],
+  :global_aops => [],
+  :global_voices => [],
+  :global_akicks => [],
+  :global_bans => []
 }
 
-$global_admins = ["UberB0t","Uber|Dragon","UberDragon"]
-$global_sops = ["Ubie"]
-$global_aops = []
-$global_voices = []
-$global_akicks = []
-$global_bans = []
+$global_admins = $settings[:bot_admins]
+$global_sops = $settings[:global_sops]
+$global_aops = $settings[:global_aops]
+$global_voices = $settings[:global_voices]
+$global_akicks = $settings[:global_akicks]
+$global_bans = $settings[:global_bans]
 
 bot = Cinch::Bot.new do
 

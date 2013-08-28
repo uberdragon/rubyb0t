@@ -27,7 +27,7 @@ class Seen
 
   def initialize(*args)
     super
-    @users = ObjectStash.load './tmp/seen-users.stash' || {}
+    @users = YamlStash.load './tmp/seen-users.yml' || {}
     log("===== Loading !seen Data from Disk into Memory =====", :info)
     log(@users.inspect, :debug)
   end
@@ -168,7 +168,7 @@ class Seen
   def backup_data!
     log("===== Backing up !seen data from memory to disk =====", :info)
     log(@users.inspect, :debug)
-    ObjectStash.store @users, './tmp/seen-users.stash'
+    YamlStash.store @users, './tmp/seen-users.yml'
   end
 
   def execute(m, nick)
@@ -178,10 +178,10 @@ class Seen
       m.reply("That's you!",true)
     elsif @users.key?(nick.downcase)
       m.reply(seen_reply(@users[nick.downcase]),true)
-      backup_data!
     else
       m.reply("I haven't seen #{nick}",true)
     end
+    backup_data!
   end
 
 end
