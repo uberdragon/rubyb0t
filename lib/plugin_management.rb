@@ -9,6 +9,8 @@ module Cinch
       match(/plugin set (\S+) (\S+) (.+)$/, method: :set_option)
 
       def load_plugin(m, plugin, mapping)
+        return unless user_is_admin?(m.user)
+
         mapping ||= plugin.gsub(/(.)([A-Z])/) { |_|
           $1 + "_" + $2
         }.downcase # we downcase here to also catch the first letter
@@ -38,6 +40,9 @@ module Cinch
       end
 
       def unload_plugin(m, plugin)
+
+        return unless user_is_admin?(m.user)
+
         begin
           plugin_class = Cinch::Plugins.const_get(plugin)
         rescue NameError
@@ -74,11 +79,17 @@ module Cinch
       end
 
       def reload_plugin(m, plugin, mapping)
+
+        return unless user_is_admin?(m.user)
+
         unload_plugin(m, plugin)
         load_plugin(m, plugin, mapping)
       end
 
       def set_option(m, plugin, option, value)
+
+        return unless user_is_admin?(m.user)
+
         begin
           const = Cinch::Plugins.const_get(plugin)
         rescue NameError
