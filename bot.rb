@@ -10,31 +10,23 @@ $settings = {
   :password => "l3tm31n",
   :network => :dalnet,
   :server => "irc.dal.net",
-  :auto_channels => ["#DragonCave","#Uber|Dragon","#html"],
+  :auto_channels => ["#DragonCave","#Uber|Dragon"],
   :github_feed => "https://github.com/searchinfluence/"
 }
 
-$admins = ["UberB0t","Uber|Dragon","UberDragon"]
+$global_admins = ["UberB0t","Uber|Dragon","UberDragon"]
 $global_sops = ["Ubie"]
 $global_aops = []
 $global_voices = []
 $global_akicks = []
 $global_bans = []
 
-$channels = {} # Initialize the hash
-$channels['#DragonCave'] = {
-  :owners => [] + $admins,
-  :sops => [] + $global_sops,
-  :aops => [] + $global_aops,
-  :voices => [] + $global_voices,
-  :akick_list => [] + $global_akicks,
-  :ban_list => [] + $global_bans
-}
-
 bot = Cinch::Bot.new do
 
   configure do |c|
     c.server = $settings[:server]
+    c.reconnect = true
+    c.delay_joins = 10
     c.nick   = $settings[:nick]
     c.user = $settings[:user]
     c.channels = $settings[:auto_channels]
@@ -62,12 +54,6 @@ bot = Cinch::Bot.new do
     # run general commands on connect
   end
 
-  on :disconnect do
-    Thread.new do
-      bot.start
-    end
-  end
-
   on :message, /hello(.+)/ do |m|
     m.reply "Hello, #{m.user.nick}"
   end
@@ -92,36 +78,7 @@ end
 
 File.open('tmp/irc_bot.pid', 'w') {|file| file << Process.pid }
 
-def user_has_access?(user,channel,type) # type => :owner, :sop, :aop, :voice
-  user.refresh
-
-  if $channels.include?(channel)
-    c = $channels[channel]
-    case type
-    when :owner
-      c[:owners].include?(user.nick)
-    when :sop
-      c[:sops].include?(user.nick) || c[:owners].include?(user.nick)
-    when :aop
-      c[:aops].include?(user.nick) || c[:sops].include?(user.nick) || c[:owners].include?(user.nick)
-    when :voice
-      c[:voices].include?(user.nick) || c[:aops].include?(user.nick) || c[:sops].include?(user.nick) || c[:owners].include?(user.nick)
-    end
-  else
-    case type
-    when :owner
-      $admins.include?(user.nick)
-    when :sop
-      $global_sops.include?(user.nick) || $admins.include?(user.nick)
-    when :aop
-      $global_aops.include?(user.nick) || $global_sops.include?(user.nick) || $admins.include?(user.nick)
-    when :voice
-      $global_voices.include?(user.nick) || $global_aops.include?(user.nick) || $global_sops.include?(user.nick) || $admins.include?(user.nick)
-    end
-  end
-end
-
 def user_is_admin?(user)
   user.refresh # be sure to refresh the data, or someone could steal the nick
-  $admins.include?(user.nick)
+  $global_admins.include?(user.nick)
 end

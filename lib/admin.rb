@@ -2,19 +2,17 @@ class Admin
   include Cinch::Plugin
 
   match /join (.+)/, method: :join
-  match /j (.+)/, method: :join
-
   match /part(?: (.+))?/, method: :part
-  match /p(?: (.+))?/, method: :part
 
   match /chan_op(?: (.+))?/, method: :channel_op
   match /op(?: (.+))?/, method: :op
-  match /deop (.+)/, method: :deop
-  match /kick (.+)/, method: :kick
-  match /voice (.+)/, method: :voice
-  match /v (.+)/, method: :voice
+  match /deop(?: (.+))?/, method: :deop
 
-  match /devoice (.+)/, method: :devoice
+  match /kick(?: (.+))?/, method: :kick
+# match /ban(?: (.+))?/, method: :ban
+
+  match /voice(?: (.+))?/, method: :voice
+  match /devoice(?: (.+))?/, method: :devoice
 
   match /nick (.+)/, method: :nick_change
   match /nick_check/, method: :nick_check
@@ -24,17 +22,24 @@ class Admin
 
   listen_to :op, method: :saw_op
 
-  #match "You're not channel operator", method: :self_op
-
   timer 60*30, method: :nick_check
-
-
-
 
   def initialize(*args)
     super
 
     @op_nicks_queue = {}
+    @voice_nicks_queue = {}
+
+    @channels = {} # Initialize the hash
+
+    @channels['#DragonCave'] = {
+      :admins => [] + $global_admins,
+      :sops => [] + $global_sops,
+      :aops => [] + $global_aops,
+      :voices => [] + $global_voices,
+      :akick_list => [] + $global_akicks,
+      :ban_list => [] + $global_bans
+    }
 
     case $settings[:network]
     when :dalnet
@@ -50,6 +55,8 @@ class Admin
   end
 
   #####################  Trigger Methods #############################
+
+  ############## GLOBAL ADMIN ONLY ###################
 
   def quit(m)
     return unless user_is_admin?(m.user)
@@ -116,10 +123,10 @@ class Admin
     else
       m.reply "I'm not an OP... attempting to fix that anomaly... >:)"
       @chanserv.send "op #{channel} #{@bot.nick}"
-      if @op_nicks_queue[channel].nil? && nick != @bot.nick
+      if @op_nicks_queue[channel].nil?
         @op_nicks_queue[channel] = []
-        @op_nicks_queue[channel].push(nick)
       end
+      @op_nicks_queue[channel].push(nick) if nick != @bot.nick  && !@op_nicks_queue[channel].include?(nick)
       log("Don't have OP in #{channel} so queing #{nick} for OP when I do")
     end
 
@@ -135,13 +142,49 @@ class Admin
     m.channel.kick(nick)
   end
 
-  def voice(m, nick)
-    return unless user_has_access?(m.user,m.channel,:voice)
-    m.channel.voice(nick)
+  def voice(m, input)
+    unless input.to_s.empty?
+      options = input.split
+      if options.length > 1
+        channel = options[0]
+        nick = options[1]
+      end
+      nick = options[0] if options.length == 1
+    end
+    channel ||= m.channel
+    nick ||= m.user
+
+    return unless user_has_access?(m.user,channel,:voice)
+
+    if bot_has_ops?(channel)
+      Channel(channel).voice(nick)
+    else
+      m.reply "I'm not an OP... attempting to fix that anomaly... >:)"
+      @chanserv.send "op #{channel} #{@bot.nick}"
+      log("obtaining ops for voice operation", :info)
+
+      @voice_nicks_queue[channel] = [] if @voice_nicks_queue[channel].nil?
+
+      @voice_nicks_queue[channel].push(nick) if nick != @bot.nick && !@voice_nicks_queue[channel].include?(nick)
+
+      log("Don't have OP in #{channel} so queing #{nick} for VOICE when I do")
+    end
+
   end
 
-  def devoice(m, nick)
-    return unless user_has_access?(m.user,m.channel,:voice)
+  def devoice(m, input)
+    unless input.to_s.empty?
+      options = input.split
+      if options.length > 1
+        channel = options[0]
+        nick = options[1]
+      end
+      nick = options[0] if options.length == 1
+    end
+    channel = channel ||= m.channel
+    nick = nick ||= m.user
+
+    return unless user_has_access?(m.user,channel,:voice)
     m.channel.devoice(nick)
   end
 
@@ -154,15 +197,30 @@ class Admin
   ###################  Event Methods #####################
 
   def saw_op(m, nick)
+    log(m.inspect,:info)
+
+    channel = m.params[0]
+
+    log(channel, :info)
+
     if nick == @bot.nick
       log("-=-=-= I got opped in #{m.channel} -=-=-=")
-      unless @op_nicks_queue[m.channel].nil?
-        log("*** Starting Op Queue for #{m.channel} ***")
+      unless @op_nicks_queue[m.channel].nil? || @op_nicks_queue[m.channel].empty?
+        log("*** Starting Op Queue for #{m.channel} ***", :info)
         @op_nicks_queue[m.channel].each do |nick|
-          log("* #{nick} getting oped if needed")
+          log("* #{nick} getting oped if needed", :info)
           Channel(m.channel).op(nick) if !Channel(m.channel).opped?(nick)
         end
         @op_nicks_queue.tap {|c| c.delete(m.channel)}
+      end
+
+      unless @voice_nicks_queue[m.channel].nil? || @voice_nicks_queue[m.channel].empty?
+        log("*** Starting Voice Queue for #{m.channel} ***",:info)
+        @voice_nicks_queue[m.channel].each do |nick|
+          log("* #{nick} getting voiced if needed",:info)
+          m.channel.voice(nick) if !Channel(m.channel).voiced?(nick)
+        end
+        @voice_nicks_queue.tap {|c| c.delete(m.channel)}
       end
     end
   end
@@ -179,4 +237,34 @@ class Admin
   def bot_has_ops?(channel,nick=@bot.nick)
     Channel(channel).opped? nick
   end
+
+  def user_has_access?(user,channel,type) # type => :owner, :sop, :aop, :voice
+    user.refresh
+
+    if @channels.include?(channel)
+      c = @channels[channel]
+      case type
+      when :admin
+        c[:admins].include?(user.nick) || $global_admins.include?(user.nick)
+      when :sop
+        c[:sops].include?(user.nick) || c[:admins].include?(user.nick)
+      when :aop
+        c[:aops].include?(user.nick) || c[:sops].include?(user.nick) || c[:admins].include?(user.nick)
+      when :voice
+        c[:voices].include?(user.nick) || c[:aops].include?(user.nick) || c[:sops].include?(user.nick) || c[:admins].include?(user.nick)
+      end
+    else
+      case type
+      when :admin
+        $global_admins.include?(user.nick)
+      when :sop
+        $global_sops.include?(user.nick) || $global_admins.include?(user.nick)
+      when :aop
+        $global_aops.include?(user.nick) || $global_sops.include?(user.nick) || $global_admins.include?(user.nick)
+      when :voice
+        $global_voices.include?(user.nick) || $global_aops.include?(user.nick) || $global_sops.include?(user.nick) || $global_admins.include?(user.nick)
+      end
+    end
+  end
+
 end
