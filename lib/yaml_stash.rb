@@ -12,7 +12,7 @@ class YamlStash
     file = File.new(file_name,'w')
     file.write yaml_dump
     file.close
-    return obj
+    return hash
   end
 
   def self.load file_name
