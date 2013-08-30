@@ -23,4 +23,8 @@ class Utils
     return ""
   end
 
+  def self.strip text_with_unicode
+    text_with_unicode.gsub!(/\x1f|\x02|\x12|\x0f|\x16|\x03(?:\d{1,2}(?:,\d{1,2})?)?/,"")
+  end
+
 end

@@ -27,7 +27,7 @@ class Seen
 
   def initialize(*args)
     super
-    @users = YamlStash.load './tmp/seen-users.yml' || {}
+    @users = DataStash.load './tmp/seen-users.stash' || {}
     log("===== Loading !seen Data from Disk into Memory =====", :info)
     log(@users.inspect, :debug)
   end
@@ -66,22 +66,22 @@ class Seen
 
   def listen_op(m, nick)
     return if nick.nick == @bot.nick
-    build_data(nick.nick, m.channel.name, :none, 'op', Time.now.to_i, m.user)
+    build_data(nick.nick, m.channel.name, :none, 'op', Time.now.to_i, m.user.nick)
   end
 
   def listen_deop(m, nick)
     return if nick.nick == @bot.nick
-    build_data(nick.nick, m.channel.name, :none, 'deop', Time.now.to_i, m.user)
+    build_data(nick.nick, m.channel.name, :none, 'deop', Time.now.to_i, m.user.nick)
   end
 
   def listen_voice(m, nick)
     return if nick.nick == @bot.nick
-    build_data(nick.nick, m.channel.name, :none, 'voice', Time.now.to_i, m.user)
+    build_data(nick.nick, m.channel.name, :none, 'voice', Time.now.to_i, m.user.nick)
   end
 
   def listen_devoice(m, nick)
     return if nick.nick == @bot.nick
-    build_data(nick.nick, m.channel.name, :none, 'devoice', Time.now.to_i, m.user)
+    build_data(nick.nick, m.channel.name, :none, 'devoice', Time.now.to_i, m.user.nick)
   end
 
   def listen_kick(m)
@@ -119,7 +119,7 @@ class Seen
     @users[who.downcase] = {
       :who => who,
       :where => where,
-      :what => what,
+      :what => Utils.strip(what),
       :type => type,
       :time => time.to_i,
       :operator => operator
@@ -168,7 +168,7 @@ class Seen
   def backup_data!
     log("===== Backing up !seen data from memory to disk =====", :info)
     log(@users.inspect, :debug)
-    YamlStash.store @users, './tmp/seen-users.yml'
+    DataStash.store @users, './tmp/seen-users.stash'
   end
 
   def execute(m, nick)
