@@ -12,7 +12,6 @@ class DataStash
   end
 
   def self.load file_name
-
     begin
       file = File.open(file_name, 'r')
     rescue
@@ -21,9 +20,15 @@ class DataStash
       DataStash.store(data.to_json, file_name)
       file = File.open(file_name, 'r')
     ensure
-      obj = JSON.parse(file.read, :symbolize_names => true)
+      if data.nil?
+        obj = JSON.parse(file.read, :symbolize_names => true)
+      else
+        obj = JSON.parse(eval(file.read), :symbolize_names => true)
+        DataStash.store(obj,file_name)
+      end
       file.close
     end
+    puts obj.inspect
     return obj
   end
   

@@ -1,4 +1,7 @@
+require 'cinch'
+
 class Utils
+  include Cinch::Plugin
   def self.seconds_to_string(s)
 
   # d = days, h = hours, m = minutes, s = seconds
@@ -24,7 +27,12 @@ class Utils
   end
 
   def self.strip text_with_unicode
-    text_with_unicode.gsub!(/\x1f|\x02|\x12|\x0f|\x16|\x03(?:\d{1,2}(?:,\d{1,2})?)?/,"")
+   # return text_with_unicode
+   puts text_with_unicode
+    if text_with_unicode == :none 
+      return
+    end
+    output = text_with_unicode.to_s.gsub(/\x1f|\x02|\x12|\x0f|\x16|\x03(?:\d{1,2}(?:,\d{1,2})?)?/,"")
   end
 
 end

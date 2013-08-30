@@ -116,7 +116,8 @@ class Seen
   end
 
   def build_data who, where, what, type, time, operator=nil
-    @users[who.downcase] = {
+    puts who.downcase.to_sym
+    @users[who.downcase.to_sym] = {
       :who => who,
       :where => where,
       :what => Utils.strip(what),
@@ -151,7 +152,7 @@ class Seen
     when 'kick'
       "%s was seen getting kicked out of %s by %s with message, \"%s\" %s" % [d[:who],d[:where],d[:operator],d[:what],timestamp]
     when 'ban'
-      "%s was banned in %s by #{operator} (%s) %s" % [d[:who],d[:where],d[:operator],d[:what],timestamp]
+      "%s was banned in %s by %s (%s) %s" % [d[:who],d[:where],d[:operator],d[:what],timestamp]
     when 'unban'
       "%s was unbanned in %s by %s (%s) %s" % [d[:who],d[:where],d[:operator],d[:what],timestamp]
     when 'voice'
@@ -172,12 +173,14 @@ class Seen
   end
 
   def execute(m, nick)
+  puts @users
+
     if nick.downcase == @bot.nick.downcase
       m.reply("That's me!",true)
     elsif nick.downcase == m.user.nick.downcase
       m.reply("That's you!",true)
-    elsif @users.key?(nick.downcase)
-      m.reply(seen_reply(@users[nick.downcase]),true)
+    elsif @users.key?(nick.downcase.to_sym)
+      m.reply(seen_reply(@users[nick.downcase.to_sym]),true)
     else
       m.reply("I haven't seen #{nick}",true)
     end
