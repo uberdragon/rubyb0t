@@ -1,3 +1,5 @@
+require 'cinch'
+
 class Admin
   include Cinch::Plugin
 
@@ -32,11 +34,11 @@ class Admin
 
     @channels = {} # Initialize the hash
 
-    @channels['#DragonCave'] = {
+    @channels['#uber|dragon'.to_sym] = {
       :admins => [] + $global_admins,
-      :sops => [] + $global_sops,
+      :sops => ['Ubie'] + $global_sops,
       :aops => [] + $global_aops,
-      :voices => [] + $global_voices,
+      :voices => ['KhashayaR'] + $global_voices,
       :akick_list => [] + $global_akicks,
       :ban_list => [] + $global_bans
     }
@@ -197,8 +199,6 @@ class Admin
   ###################  Event Methods #####################
 
   def saw_op(m, nick)
-    log(m.inspect,:info)
-
     channel = m.params[0]
 
     log(channel, :info)
@@ -240,6 +240,7 @@ class Admin
 
   def user_has_access?(user,channel,type) # type => :owner, :sop, :aop, :voice
     user.refresh
+    channel = channel.name.downcase.to_sym
 
     if @channels.include?(channel)
       c = @channels[channel]

@@ -116,7 +116,6 @@ class Seen
   end
 
   def build_data who, where, what, type, time, operator=nil
-    puts who.downcase.to_sym
     @users[who.downcase.to_sym] = {
       :who => who,
       :where => where,
@@ -173,7 +172,6 @@ class Seen
   end
 
   def execute(m, nick)
-  puts @users
 
     if nick.downcase == @bot.nick.downcase
       m.reply("That's me!",true)

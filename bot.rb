@@ -69,8 +69,8 @@ bot = Cinch::Bot.new do
   end
 end
 
-bot.loggers << Cinch::Logger::FormattedLogger.new(File.open("./log/log.log", "a"))
-bot.loggers.level = :debug
+#bot.loggers << Cinch::Logger::FormattedLogger.new(File.open("./log/log.log", "a"))
+#bot.loggers.level = :debug
 bot.loggers.first.level = :log
 
 Thread.new do

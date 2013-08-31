@@ -28,7 +28,6 @@ class DataStash
       end
       file.close
     end
-    puts obj.inspect
     return obj
   end
   

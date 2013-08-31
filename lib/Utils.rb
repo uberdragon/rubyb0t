@@ -13,6 +13,7 @@ class Utils
   d = (h / 24).floor
   h = h % 24
 
+  output = "0 seconds"
   output = "#{s} second#{Utils.pluralize(s)}" if (s > 0)
   output = "#{m} minute#{Utils.pluralize(m)}, #{s} second#{Utils.pluralize(s)}" if (m > 0)
   output = "#{h} hour#{Utils.pluralize(h)}, #{m} minute#{Utils.pluralize(m)}, #{s} second#{Utils.pluralize(s)}" if (h > 0)
@@ -27,8 +28,6 @@ class Utils
   end
 
   def self.strip text_with_unicode
-   # return text_with_unicode
-   puts text_with_unicode
     if text_with_unicode == :none 
       return
     end
