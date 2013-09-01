@@ -10,7 +10,7 @@ $settings = {
   :password => "l3tm31n",
   :network => :dalnet,
   :server => "irc.dal.net",
-  :auto_channels => ["#DragonCave","#Uber|Dragon","#html"],
+  :auto_channels => ["#DragonCave","#Uber|Dragon"], #"#html","#jquery","#rubyb0t"],
   :bot_admins => ["UberB0t","Uber|Dragon","UberDragon"],
   :global_sops => ["Ubie"],
   :global_aops => [],
@@ -41,6 +41,7 @@ bot = Cinch::Bot.new do
       Admin,
       Demo,
       DiceRoll,
+      ChannelStats,
       Github,
       Google,
       Seen,
@@ -55,22 +56,12 @@ bot = Cinch::Bot.new do
 
   end
 
-  on :connect do
-    # run general commands on connect
-  end
-
-  on :message, /hello(.+)/ do |m|
-    m.reply "Hello, #{m.user.nick}"
-  end
-
-
   on 482 do |m|
     m.reply "Sad, I don't have ops here."
   end
 end
 
-#bot.loggers << Cinch::Logger::FormattedLogger.new(File.open("./log/log.log", "a"))
-#bot.loggers.level = :debug
+bot.loggers.level = :debug
 bot.loggers.first.level = :log
 
 Thread.new do
