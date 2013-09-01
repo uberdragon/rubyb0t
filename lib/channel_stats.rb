@@ -40,7 +40,7 @@ class ChannelStats
 					placement = "#{place}th"
 				end
 
-				output += "#{placement}: #{nick[0]} (#{nick[1]}) "
+				output += "#{placement}: #{nick[0]} [#{nick[1]}] "
 			end
 		end
 
