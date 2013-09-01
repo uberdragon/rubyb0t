@@ -91,6 +91,7 @@ class ChannelStats
   def build_data channel, nickname, word_count
     chan_data = @wordcount[channel.downcase.to_sym] 
     chan_data[nickname.downcase.to_sym] = word_count
+    log("Storing #{channel}, #{nickname} now has #{word_count} words spoken", :debug)
   end
 
 end
