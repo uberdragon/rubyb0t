@@ -8,16 +8,19 @@ class ChannelStats
 
   listen_to :channel, method: :collect_word_count
 
-	match /top10/
+	match /top10/, method: :topten_trigger
+
+  timer 620, method: :backup_data! # 10 minutes
 
 	def initialize(*args)
 		super
-
-		@channel = {}
+    @wordcount = DataStash.load './tmp/channel-word-counts.stash' || {}
+    log("===== Loading !top10 Data from Disk into Memory =====", :info)
+    log(@wordcount.inspect, :debug)
 	end
 
 	def get_stats(channel)
-		@nicks = @channel[channel.downcase.to_sym]
+		@nicks = @wordcount[channel.downcase.to_sym]
 		@nicks = @nicks.sort {|a1,a2| a2[1]<=>a1[1]}
 
 		output = ''
@@ -57,23 +60,20 @@ class ChannelStats
 		this_count = Utils.strip(m.message).split.length
 		new_count = old_count.to_i + this_count.to_i
 		build_data(m.channel.name, m.user.nick, new_count)
-		log("#{m.channel.name}: #{m.user.nick}: #{old_count} + #{this_count} = #{new_count}", :info)
-
 	end
 
-	def execute(m)
+	def topten_trigger(m)
+		backup_data!
 		m.reply(get_stats(m.channel.name), true)
 	end
 
 	def current_count channel, nickname
-		puts '++++++++++++++++++++++++++++++++++++++++++++++++++'
-
-		if @channel[channel.downcase.to_sym].nil?
-			@channel[channel.downcase.to_sym] = {}
+		if @wordcount[channel.downcase.to_sym].nil?
+			@wordcount[channel.downcase.to_sym] = {}
 			return 0
 		end
 
-		chan_data = @channel[channel.downcase.to_sym]
+		chan_data = @wordcount[channel.downcase.to_sym]
 
 		if chan_data.empty?
 			return 0
@@ -82,8 +82,14 @@ class ChannelStats
 		end
 	end
 
+  def backup_data!
+    log("===== Backing up !top10 data from memory to disk =====", :info)
+    log(@wordcount.inspect, :debug)
+    DataStash.store @wordcount, './tmp/channel-word-counts.stash'
+  end
+
   def build_data channel, nickname, word_count
-    chan_data = @channel[channel.downcase.to_sym] 
+    chan_data = @wordcount[channel.downcase.to_sym] 
     chan_data[nickname.downcase.to_sym] = word_count
   end
 
