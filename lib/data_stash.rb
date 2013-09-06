@@ -1,4 +1,5 @@
 require 'cinch'
+require 'json'
 
 class DataStash
   include Cinch::Plugin

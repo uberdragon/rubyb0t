@@ -27,6 +27,7 @@ class Seen
 
   def initialize(*args)
     super
+
     @users = DataStash.load './tmp/seen-users.stash' || {}
     log("===== Loading !seen Data from Disk into Memory =====", :info)
     log(@users.inspect, :debug)
