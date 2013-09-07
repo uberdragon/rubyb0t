@@ -30,10 +30,11 @@ class News
       desc = link = ''
 
       title = page.css("h3.r")[s].text
-     # desc = page.css("span.st")[s].text
+      source = page.css("div.slp")[s].text
+      desc = page.css("div.st")[s].text
       link = page.css("h3.r")[s].at('a')[:href].gsub('/url?q=','').split('&')[0]
 
-      CGI.unescape_html "#{title} - #{desc} (#{link})"
+      CGI.unescape_html "[#{source}] #{title} - #{desc} (#{link})"
 
     end
 

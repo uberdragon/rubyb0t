@@ -9,6 +9,8 @@ class Admin
   match /chan_op(?: (.+))?/, method: :channel_op
   match /op(?: (.+))?/, method: :op
   match /deop(?: (.+))?/, method: :deop
+  match /vdop(?: (.+))?/, method: :vdop
+
 
   match /kick(?: (.+))?/, method: :kick
 # match /ban(?: (.+))?/, method: :ban
@@ -34,11 +36,19 @@ class Admin
 
     @channels = {} # Initialize the hash
 
-    @channels['#uber|dragon'.to_sym] = {
+    @channels['#uber|dragon'.downcase.to_sym] = {
       :admins => [] + $global_admins,
       :sops => ['Ubie'] + $global_sops,
       :aops => [] + $global_aops,
       :voices => ['KhashayaR'] + $global_voices,
+      :akick_list => [] + $global_akicks,
+      :ban_list => [] + $global_bans
+    }
+    @channels['#DragonCave'.downcase.to_sym] = {
+      :admins => [] + $global_admins,
+      :sops => ['Ubie','anmlcrckr','K|B'] + $global_sops,
+      :aops => [] + $global_aops,
+      :voices => ['KhashayaR','KanKouni'] + $global_voices,
       :akick_list => [] + $global_akicks,
       :ban_list => [] + $global_bans
     }
@@ -98,6 +108,35 @@ class Admin
 
     return unless user_has_access?(m.user,channel,:sop)
     @chanserv.send "op #{channel} #{nick}"
+  end
+
+  def vdop(m, input)
+    unless input.to_s.empty?
+      options = input.split
+      if options.length > 1
+        channel = options[0]
+        nick = options[1]
+      end
+      nick = options[0] if options.length == 1
+    end
+    channel ||= m.channel
+    nick ||= m.user
+
+    return unless user_has_access?(m.user,channel,:aop)
+
+    if bot_has_ops?(channel)
+      Channel(channel).voice(nick)
+    else
+      m.reply "I'm not an OP... attempting to fix that anomaly... >:)"
+      @chanserv.send "op #{channel} #{@bot.nick}"
+      log("obtaining ops for voice and deop operation", :info)
+
+      @voice_op_nicks_queue[channel] = [] if @voice_op_nicks_queue[channel].nil?
+
+      @voice_op_nicks_queue[channel].push(nick) if nick != @bot.nick && !@voice_op_nicks_queue[channel].include?(nick)
+
+      log("Don't have OP in #{channel} so queing #{nick} for VOICE and DEOP when I do")
+    end
   end
 
   def op(m, input)
@@ -201,10 +240,17 @@ class Admin
   def saw_op(m, nick)
     channel = m.params[0]
 
-    log(channel, :info)
-
     if nick == @bot.nick
       log("-=-=-= I got opped in #{m.channel} -=-=-=")
+      unless @voice_op_nicks_queue[m.channel].nil? || @voice_op_nicks_queue[m.channel].empty?
+        log("*** Starting Op Queue for #{m.channel} ***", :info)
+        @voice_op_nicks_queue[m.channel].each do |nick|
+          log("* #{nick} getting deop/voiced if needed", :info)
+#          Channel(m.channel).op(nick) if !Channel(m.channel).opped?(nick)
+        end
+        @voice_op_nicks_queue.tap {|c| c.delete(m.channel)}
+      end
+
       unless @op_nicks_queue[m.channel].nil? || @op_nicks_queue[m.channel].empty?
         log("*** Starting Op Queue for #{m.channel} ***", :info)
         @op_nicks_queue[m.channel].each do |nick|
@@ -240,7 +286,11 @@ class Admin
 
   def user_has_access?(user,channel,type) # type => :owner, :sop, :aop, :voice
     user.refresh
-    channel = channel.name.downcase.to_sym
+    if channel.respond_to?(:name)
+      channel = channel.name.downcase.to_sym
+    else 
+      channel = channel.downcase.to_sym
+    end
 
     if @channels.include?(channel)
       c = @channels[channel]
