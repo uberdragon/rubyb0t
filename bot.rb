@@ -2,6 +2,8 @@ require 'cinch'
 require 'sinatra'
 require "cinch/plugins/identify"
 
+set :port, 1313 # Sinatra port for web based actions
+
 Dir[File.dirname(__FILE__) + '/lib/**/*.rb'].each {|file| require file}
 
 $settings = {
@@ -67,9 +69,7 @@ Thread.new do
   bot.start
 end
 
-get '/announce' do
-  bot.channels[0].msg params[:message]
-end
+$bot = bot
 
 File.open('tmp/irc_bot.pid', 'w') {|file| file << Process.pid }
 
