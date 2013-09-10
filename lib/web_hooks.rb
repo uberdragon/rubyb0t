@@ -1,5 +1,8 @@
 require 'cinch'
 require 'sinatra'
+require 'rubygems'
+
+set :public_folder, Proc.new { File.join(root, "static") }
 
 class WebHooks
 
@@ -22,11 +25,9 @@ get '/announce' do
 end
 
 get '/stats' do
-
-"Displaying Stats"
-
+	erb "wtf"
 end
 
 get '/' do
-	erb :index
+	erb "showing index y0"
 end
