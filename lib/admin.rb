@@ -1,4 +1,5 @@
 require 'cinch'
+require 'flippy'
 
 class Admin
   include Cinch::Plugin
@@ -22,6 +23,7 @@ class Admin
   match /nick_check/, method: :nick_check
   match /ident/, method: :ident
   match /msg (.+?) (.+)/, method: :message
+  match /flip (.+)/, method: :flip_message
   match /quit(.+?)/, method: :quit
 
   listen_to :op, method: :saw_op
@@ -69,6 +71,11 @@ class Admin
   #####################  Trigger Methods #############################
 
   ############## GLOBAL ADMIN ONLY ###################
+
+  def flip_message(m,message)
+    puts m.message.split[-1]
+    m.reply message.flip, true
+  end
 
   def quit(m)
     return unless user_is_admin?(m.user)
