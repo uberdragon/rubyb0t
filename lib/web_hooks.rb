@@ -55,5 +55,5 @@ end
 # Bot's index page - could show general stats for the public and then contain
 # a login area to be able to control the bot and use it to channel spy etc
 get '/' do
-	erb :index
+	erb :index, :locals => {:botname => $bot.nick}
 end
