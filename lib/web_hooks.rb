@@ -70,21 +70,24 @@ get '/' do
 		if channel.opped? @bot.nick
 			@channels[i] = {
 				:name => "@#{channel.name}",
+				:title => "Bot has OP",
 				:link => channel.name[1..-1]
 			}
 		elsif channel.voiced? @bot.nick
 			@channels[i] = {
 				:name => "+#{channel.name}",
+				:title => "Bot has Voice",
 				:link => channel.name[1..-1]
 			}
 		else
 			@channels[i] = {
 				:name => "#{channel.name}",
+				:title => "Regular Chatter",
 				:link => channel.name[1..-1]
 			}
 		end
 	end
-	@channel_list = @channels.each.map{|x| "<a href='channel/#{x[:link]}'>#{x[:name]}</a>"}.join(", ")
+	@channel_list = @channels.each.map{|x| "<a title='#{x[:title]}' href='channel/#{x[:link]}'>#{x[:name]}</a>"}.join(", ")
 
-	erb :index
+	respond_with :index
 end
