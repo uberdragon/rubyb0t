@@ -65,8 +65,7 @@ end
 get '/' do
 	@bot = $bot
 	@channels = []
-	@bot.channels.each_with_index do |channel,i|
-#	.map{|x| "<a href='channel/#{x.name[1..-1]}'>#{x.name}</a>" }.join(", ")
+	@bot.channels.uniq.each_with_index do |channel,i|
 		if channel.opped? @bot.nick
 			@channels[i] = {
 				:name => "@#{channel.name}",
