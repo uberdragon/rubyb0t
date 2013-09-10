@@ -1,1 +1,8 @@
-b0t Index woot for <%= botname %>
+<h1><%= @bot.nick %></h1>
+<h5><%= @bot.mask %></h5>
+<hr>
+Network: <%= @bot.irc.network.name %>
+<br>
+Server: <%= @bot.config.server %>
+<br><br>
+Current Channels: <%= @channel_list %>
