@@ -5,7 +5,7 @@ require 'cgi'
 
 class Google
   include Cinch::Plugin
-  match /google (.+)/
+  match /googletest (.+)/
 
   def search(query)
     if query.split.last == 'url'
