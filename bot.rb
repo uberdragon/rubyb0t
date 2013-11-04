@@ -48,6 +48,7 @@ bot = Cinch::Bot.new do
       News,
       Pun,
       Seen,
+      Twitter,
       Wiki,
       UrbanDictionary
     ]
