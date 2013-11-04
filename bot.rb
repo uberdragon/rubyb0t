@@ -43,8 +43,10 @@ bot = Cinch::Bot.new do
       Admin,
       DiceRoll,
       ChannelStats,
+      Gif,
       Google,
       News,
+      Pun,
       Seen,
       Wiki,
       UrbanDictionary
