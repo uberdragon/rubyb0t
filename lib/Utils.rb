@@ -12,12 +12,15 @@ class Utils
     m = m % 60
     d = (h / 24).floor
     h = h % 24
+    w = (d / 7).floor
+    d = w % 7
 
     output = "0 seconds"
     output = "#{s} second#{Utils.pluralize(s)}" if (s > 0)
     output = "#{m} minute#{Utils.pluralize(m)}, #{s} second#{Utils.pluralize(s)}" if (m > 0)
     output = "#{h} hour#{Utils.pluralize(h)}, #{m} minute#{Utils.pluralize(m)}, #{s} second#{Utils.pluralize(s)}" if (h > 0)
-    output = "#{d} day#{Utils.pluralize(d)}, #{h} hour#{Utils.pluralize(h)}, #{m} minute#{Utils.pluralize(m)}, #{s} second#{Utils.pluralize(s)}" if (d > 0)
+    output = "#{d} day#{Utils.pluralize(d)}, #{h} hour#{Utils.pluralize(h)}, #{m} minute#{Utils.pluralize(m)}" if (d > 0)
+    output = "#{w} week#{Utils.pluralize(w)}, #{d} day#{Utils.pluralize(d)}, #{h} hour#{Utils.pluralize(h)}" if (w > 0)
 
     return output
   end
